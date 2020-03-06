@@ -21,13 +21,12 @@ public:
     ~FalloutWords()
     {}
 
-    bool                LoadWordList(const std::string &filename);
-
-    static ptr_t        CreateMasterWordLists();
+    bool                loadWordList(const std::string &filename);
+    void                dump();
 
 private:
     typedef std::set<std::string>       string_set_t;
-    typedef std::map<int, string_set_t> string_length_map_t;
+    typedef std::map<size_t, string_set_t> string_length_map_t;
 
     string_length_map_t mMasterLists;
 };

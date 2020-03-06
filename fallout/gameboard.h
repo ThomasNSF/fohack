@@ -44,8 +44,8 @@ public:
     GameBoard();
     ~GameBoard();
 
-    void                    Initialize();
-    bool                    Play();
+    void                    initialize();
+    bool                    play();
 
     WINDOW *                mGameWindow;
     
@@ -68,12 +68,12 @@ public:
     static const int        sFieldHeight;
 
 private:
-    bool                    MoveCursor(int key);
+    bool                    moveCursor(int key);
 
-    void                    DisplayHeader();
-    void                    DisplayFiller();
-    void                    DisplayField();
-    void                    InitializeGameData();
+    void                    displayHeader();
+    void                    displayFiller();
+    void                    displayField();
+    void                    initializeGameData();
 
     bool                    mExit;
 };

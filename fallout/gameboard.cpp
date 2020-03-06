@@ -67,21 +67,21 @@ GameBoard::~GameBoard()
     }
 }
 
-void GameBoard::Initialize()
+void GameBoard::initialize()
 {
-    InitializeGameData();
+    initializeGameData();
 
     refresh();
 
-    DisplayHeader();
-    DisplayFiller();
-    DisplayField();
+    displayHeader();
+    displayFiller();
+    displayField();
 
     if (mPanelStatus)
         wrefresh(mPanelStatus);
 }
 
-void GameBoard::InitializeGameData()
+void GameBoard::initializeGameData()
 {
     mCursor = std::make_shared<GameCursor>(sFieldWidth, sFieldHeight, false);
 
@@ -96,7 +96,7 @@ void GameBoard::InitializeGameData()
     }
 }
 
-bool GameBoard::Play()
+bool GameBoard::play()
 {
     while (!mExit)
     {
@@ -115,8 +115,8 @@ bool GameBoard::Play()
         case KEY_DOWN:
         case KEY_LEFT:
         case KEY_RIGHT:
-            if (MoveCursor(key))
-                DisplayField();
+            if (moveCursor(key))
+                displayField();
             else
                 beep();
             break;
@@ -133,7 +133,7 @@ bool GameBoard::Play()
     return true;
 }
 
-bool GameBoard::MoveCursor(int key)
+bool GameBoard::moveCursor(int key)
 {
     bool success(false);
     switch (key)
@@ -158,7 +158,7 @@ bool GameBoard::MoveCursor(int key)
 }
 
 
-void GameBoard::DisplayHeader()
+void GameBoard::displayHeader()
 {
     if (mPanelHeader)
     {
@@ -174,7 +174,7 @@ void GameBoard::DisplayHeader()
     }
 }
 
-void GameBoard::DisplayFiller()
+void GameBoard::displayFiller()
 {
     if (mPanelFiller[0] && mPanelFiller[1])
     {
@@ -195,7 +195,7 @@ void GameBoard::DisplayFiller()
     }
 }
 
-void GameBoard::DisplayField()
+void GameBoard::displayField()
 {
     if (mPanelField[0] && mPanelField[1])
     {
