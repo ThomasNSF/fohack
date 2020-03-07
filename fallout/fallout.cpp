@@ -4,7 +4,7 @@
 #include "fallout.h"
 #include "gamedata.h"
 #include "gameboard.h"
-#include <boost\program_options.hpp>
+#include <boost/program_options.hpp>
 #include <time.h>
 
 WINDOW *gWindow(nullptr);
@@ -69,7 +69,7 @@ namespace
                 std::cerr << "Bad command line:" << std::endl;
                 std::cerr << e.what() << std::endl;
                 usage(argv[0]);
-                return false;
+                return OptionsData::ptr_t();
             }
 
             if (vm.count("help")) 

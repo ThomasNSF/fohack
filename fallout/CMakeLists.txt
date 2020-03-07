@@ -7,7 +7,7 @@ set(FALLOUT_SOURCE
 )
 
 set(FALLOUT_HEADERS
-    Fallout.h
+    fallout.h
     gameboard.h
     gamedata.h
 )
