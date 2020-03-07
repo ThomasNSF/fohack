@@ -33,17 +33,32 @@ const int GameBoard::sFieldWidth(12);
 const int GameBoard::sFieldHeight(17);
 
 //------------------------------------------------------------------------
-GameBoard::GameBoard() :
-    mGameWindow(nullptr),
+GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words, 
+        const OptionsData::ptr_t &opts):
+    mGameWindow(mainwindow),
     mPanelHeader(nullptr),
     mPanelStatus(nullptr),
     mPanelFiller({ nullptr, nullptr }),
     mPanelField({ nullptr, nullptr }),
-    mCompanyName("RED ROCKET GARAGE"),
+    mCompanyName(),
     mTurnsRemaining(3),
     mCursor(),
-    mExit(false)
-{ }
+    mExit(false),
+    mWords(words),
+    mOpts(opts)
+{ 
+    mGameWindow = mainwindow;
+
+    mCompanyName = opts->mTerminalName;
+
+    mPanelHeader = newwin(5, 40, 0, 0);
+    mPanelFiller[0] = newwin(17, 6, 5, 0);
+    mPanelFiller[1] = dupwin(mPanelFiller[0]);
+    mvwin(mPanelFiller[1], 5, 20);
+    mPanelField[0] = newwin(sFieldHeight, sFieldWidth, 5, 7);
+    mPanelField[1] = dupwin(mPanelField[0]);
+    mvwin(mPanelField[1], 5, 27);
+}
 
 GameBoard::~GameBoard()
 {
@@ -94,6 +109,16 @@ void GameBoard::initializeGameData()
     {
         c = FILLER_CHARS[rand() % FILLER_CHARS.size()];
     }
+
+    mDisplayData.clear();
+    mDisplayData.resize(total_length, 0);
+
+    initializeWords();
+}
+
+void GameBoard::initializeWords()
+{
+    
 }
 
 bool GameBoard::play()
@@ -226,26 +251,6 @@ void GameBoard::displayField()
             wrefresh(field);
         }
     }
-}
-
-
-//------------------------------------------------------------------------
-GameBoard::ptr_t GameBoard::BuildGameBoard(WINDOW *mainwindow)
-{
-    GameBoard::ptr_t bw(std::make_shared<GameBoard>());
-
-    bw->mGameWindow = mainwindow;
-
-    bw->mPanelHeader = newwin(5, 40, 0, 0);
-    bw->mPanelFiller[0] = newwin(17, 6, 5, 0);
-    bw->mPanelFiller[1] = dupwin(bw->mPanelFiller[0]);
-    mvwin(bw->mPanelFiller[1], 5, 20);
-    bw->mPanelField[0] = newwin(sFieldHeight, sFieldWidth, 5, 7);
-    bw->mPanelField[1] = dupwin(bw->mPanelField[0]);
-    mvwin(bw->mPanelField[1], 5, 27);
-	//bw->mPanelStatus ;
-
-    return bw;
 }
 
 //========================================================================

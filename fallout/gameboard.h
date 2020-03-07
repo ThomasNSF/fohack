@@ -9,6 +9,9 @@
 #include <vector>
 #include <curses.h>
 
+#include "fallout.h"
+#include "gamedata.h"
+
 class GameBoard
 {
 public:
@@ -41,28 +44,11 @@ public:
         int mLimit;
     };
 
-    GameBoard();
+    GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words, const OptionsData::ptr_t &opts);
     ~GameBoard();
 
     void                    initialize();
     bool                    play();
-
-    WINDOW *                mGameWindow;
-    
-    WINDOW *                mPanelHeader;
-    WINDOW *                mPanelStatus;
-    std::array<WINDOW *, 2> mPanelFiller;
-    std::array<WINDOW *, 2> mPanelField;
-
-    static ptr_t BuildGameBoard(WINDOW *mainwindow);
-
-    std::string             mCompanyName;
-    int                     mTurnsRemaining;
-
-    std::string             mDisplayField;
-    std::vector<int>        mDisplayData;
-
-    GameCursor::ptr_t       mCursor;
 
     static const int        sFieldWidth;
     static const int        sFieldHeight;
@@ -73,9 +59,28 @@ private:
     void                    displayHeader();
     void                    displayFiller();
     void                    displayField();
-    void                    initializeGameData();
 
+    void                    initializeGameData();
+    void                    initializeWords();
+
+    WINDOW *                mGameWindow;
+    
+    WINDOW *                mPanelHeader;
+    WINDOW *                mPanelStatus;
+    std::array<WINDOW *, 2> mPanelFiller;
+    std::array<WINDOW *, 2> mPanelField;
+
+    std::string             mCompanyName;
+    int                     mTurnsRemaining;
+
+    std::string             mDisplayField;
+    std::vector<int>        mDisplayData;
+
+    GameCursor::ptr_t       mCursor;
     bool                    mExit;
+
+    FalloutWords::ptr_t     mWords; 
+    OptionsData::ptr_t      mOpts;
 };
 
 #endif // !FALLOUT_GAMEBOARD_H

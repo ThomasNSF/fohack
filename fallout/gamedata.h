@@ -24,7 +24,6 @@ public:
     bool                loadWordList(const std::string &filename);
     void                dump();
 
-private:
     typedef std::set<std::string>       string_set_t;
     typedef std::map<size_t, string_set_t> string_length_map_t;
 
