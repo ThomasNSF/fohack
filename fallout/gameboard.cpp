@@ -3,11 +3,13 @@
 
 #include "fallout.h"
 #include "gameboard.h"
+#include <algorithm>
 
 //========================================================================
 namespace
 {
     const char KEY_ESC(0x1b);     /* Escape */
+    const char KEY_RETURN(0x0a);  /* Return */
 
     std::string FILLER_CHARS("\\/!@#$%^'\",.-_&*(){}[]");
 
@@ -58,6 +60,9 @@ GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words,
     mPanelField[0] = newwin(sFieldHeight, sFieldWidth, 5, 7);
     mPanelField[1] = dupwin(mPanelField[0]);
     mvwin(mPanelField[1], 5, 27);
+    mPanelStatus = newwin(17, 20, 5, 40);
+    scrollok(mPanelStatus, true);
+    wmove(mPanelStatus, 16, 0);
 }
 
 GameBoard::~GameBoard()
@@ -91,6 +96,7 @@ void GameBoard::initialize()
     displayHeader();
     displayFiller();
     displayField();
+    displayStatus();
 
     if (mPanelStatus)
         wrefresh(mPanelStatus);
@@ -98,7 +104,7 @@ void GameBoard::initialize()
 
 void GameBoard::initializeGameData()
 {
-    mCursor = std::make_shared<GameCursor>(sFieldWidth, sFieldHeight, false);
+    mCursor = std::make_shared<GameCursor>(sFieldWidth, sFieldHeight, false, mDisplayData);
 
     int total_length(sFieldWidth * sFieldHeight * 2);
     mDisplayField.clear();
@@ -118,7 +124,35 @@ void GameBoard::initializeGameData()
 
 void GameBoard::initializeWords()
 {
-    
+    int total_length(sFieldWidth * sFieldHeight * 2);
+
+    size_t wordlength(10);
+   /*pick word list based on difficulty*/
+    FalloutWords::string_vec_t list(mWords->mMasterLists[wordlength].begin(), 
+        mWords->mMasterLists[wordlength].end());
+
+    std::random_shuffle(list.begin(), list.end());
+
+    size_t maxwords(9);
+
+    size_t wordcount(std::min(list.size(), maxwords));
+    size_t span(total_length / wordcount);
+    size_t padding(((span - 2) - wordlength) / 2);
+  
+    size_t count(0);
+    for (const std::string &word : list)
+    {
+        if (count >= wordcount)
+            break;
+        size_t start((std::rand() % padding) + (count * span));
+        mPasswords.push_back(word);
+        std::string::iterator it_start(mDisplayField.begin() + start);
+        std::vector<int>::iterator it_markers(mDisplayData.begin() + start);
+
+        std::copy(word.begin(), word.end(), it_start);
+        std::fill(it_markers, it_markers + wordlength, int(count + 1));
+        ++count;
+    }
 }
 
 bool GameBoard::play()
@@ -146,6 +180,7 @@ bool GameBoard::play()
                 beep();
             break;
 
+        case KEY_RETURN:
         case KEY_ENTER:
             break;
 
@@ -181,7 +216,6 @@ bool GameBoard::moveCursor(int key)
 
     return success;
 }
-
 
 void GameBoard::displayHeader()
 {
@@ -235,16 +269,50 @@ void GameBoard::displayField()
         mvwprintw(mPanelField[0], 0, 0, "%s", sub1.c_str());
         mvwprintw(mPanelField[1], 0, 0, "%s", sub2.c_str());
 
+#if 0
+        for (int i = 0; i < mDisplayData.size(); ++i)
+        {
+            if (mDisplayData[i] != 0)
+                continue;
+            std::stringstream convert;
+            convert << mDisplayData[i];
+
+            WINDOW *field(mPanelField[mCursor->convertToField(i)]);
+
+            int posy(mCursor->convertToY(i));
+            int posx(mCursor->convertToX(i));
+
+            mvwaddch(field, posy, posx, convert.str()[0]);
+        }
+#endif
+
         if (mCursor)
         { 
-            WINDOW *field(mPanelField[ mCursor->getField() ]);
+            if (mCursor->isOnRange())
+            {
+                for (int i = mCursor->getRangeStart(); i < mCursor->getRangeEnd(); ++i)
+                {
+                    WINDOW *field(mPanelField[mCursor->convertToField(i)]);
 
-            int posy(mCursor->getY());
-            int posx(mCursor->getX());
+                    int posy(mCursor->convertToY(i));
+                    int posx(mCursor->convertToX(i));
 
-            wattrset(field, A_REVERSE);
-            mvwaddch(field, posy, posx, mDisplayField[mCursor->getPosition()]);
-            wattroff(field, A_REVERSE);
+                    wattrset(field, A_REVERSE);
+                    mvwaddch(field, posy, posx, mDisplayField[i]);
+                    wattroff(field, A_REVERSE);
+               }
+            }
+            else
+            {
+                WINDOW *field(mPanelField[mCursor->getField()]);
+
+                int posy(mCursor->getY());
+                int posx(mCursor->getX());
+
+                wattrset(field, A_REVERSE);
+                mvwaddch(field, posy, posx, mDisplayField[mCursor->getPosition()]);
+                wattroff(field, A_REVERSE);
+            }
         }
         for (WINDOW *field : mPanelField)
         {
@@ -253,11 +321,17 @@ void GameBoard::displayField()
     }
 }
 
+void GameBoard::displayStatus()
+{
+    wprintw(mPanelStatus, "ENTER PASSWORD NOW\n> ");
+}
+
 //========================================================================
-GameBoard::GameCursor::GameCursor(int span, int limit, bool wrap):
+GameBoard::GameCursor::GameCursor(int span, int limit, bool wrap, std::vector<int> &data):
     mPosition(0),
     mSpan(span),
-    mLimit(limit)
+    mLimit(limit),
+    mFieldData(data)
 {
 }
 
@@ -348,25 +422,56 @@ void GameBoard::GameCursor::setPosition(int field, int x, int y)
     mPosition = (field * (mSpan * mLimit)) + (y * mSpan) + x;
 }
 
-int GameBoard::GameCursor::getField() const
+int GameBoard::GameCursor::convertToField(int position) const
 {
-    return (mPosition / (mSpan * mLimit));
+    return (position / (mSpan * mLimit));
 }
 
-int GameBoard::GameCursor::getX() const
+int GameBoard::GameCursor::convertToX(int position) const
 {
     int field_length(mSpan * mLimit);
 
-    int subrange(mPosition % field_length);
+    int subrange(position % field_length);
 
     return (subrange % mSpan);
 }
 
-int GameBoard::GameCursor::getY() const
+int GameBoard::GameCursor::convertToY(int position) const
 {
     int field_length(mSpan * mLimit);
 
-    int subrange(mPosition % field_length);
+    int subrange(position % field_length);
 
     return (subrange / mSpan);
+}
+
+bool GameBoard::GameCursor::isOnRange() const
+{
+    return (mFieldData[mPosition] != 0);
+}
+
+int GameBoard::GameCursor::getRangeStart() const
+{
+    if (!isOnRange())
+        return mPosition;
+
+    int key(mFieldData[mPosition]);
+    std::vector<int>::iterator it_cur(mFieldData.begin() + mPosition);
+
+    std::vector<int>::iterator start(std::find(mFieldData.begin(), it_cur + 1, key));
+    return int(std::distance(mFieldData.begin(), start));
+}
+
+int GameBoard::GameCursor::getRangeEnd() const
+{
+    if (!isOnRange())
+        return mPosition;
+
+    int key(mFieldData[mPosition]);
+    std::vector<int>::iterator it_cur(mFieldData.begin() + mPosition);
+
+    std::vector<int>::iterator end(std::find_if_not(it_cur, mFieldData.end(), 
+        [key](const int &test) { return test == key; }));
+
+    return mPosition + int(std::distance(it_cur, end));
 }

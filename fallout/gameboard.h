@@ -22,26 +22,35 @@ public:
     public:
         typedef std::shared_ptr<GameCursor> ptr_t;
 
-        GameCursor(int span, int limit, bool wrap);
+        GameCursor(int span, int limit, bool wrap, std::vector<int> &data);
 
-        bool advanceLeft();
-        bool advanceRight();
-        bool advanceUp();
-        bool advanceDown();
+        bool        advanceLeft();
+        bool        advanceRight();
+        bool        advanceUp();
+        bool        advanceDown();
 
-        void setPosition(int pos) { mPosition = pos; }
-        void setPosition(int field, int x, int y);
+        void        setPosition(int pos) { mPosition = pos; }
+        void        setPosition(int field, int x, int y);
 
-        int getPosition() const { return mPosition; }
-        int getField() const;
-        int getX() const;
-        int getY() const;
+        int         getPosition() const { return mPosition; }
+        int         getField() const    { return convertToField(mPosition); }
+        int         getX() const        { return convertToX(mPosition); }
+        int         getY() const        { return convertToY(mPosition); }
+
+        bool        isOnRange() const;
+        int         getRangeStart() const;
+        int         getRangeEnd() const;
+
+        int         convertToField(int position) const;
+        int         convertToX(int position) const;
+        int         convertToY(int position) const;
 
     private:
-        int mPosition;
+        std::vector<int> &  mFieldData;
+        int                 mPosition;
 
-        int mSpan;
-        int mLimit;
+        int                 mSpan;
+        int                 mLimit;
     };
 
     GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words, const OptionsData::ptr_t &opts);
@@ -59,6 +68,7 @@ private:
     void                    displayHeader();
     void                    displayFiller();
     void                    displayField();
+    void                    displayStatus();
 
     void                    initializeGameData();
     void                    initializeWords();
@@ -78,6 +88,8 @@ private:
 
     GameCursor::ptr_t       mCursor;
     bool                    mExit;
+
+    FalloutWords::string_vec_t  mPasswords;
 
     FalloutWords::ptr_t     mWords; 
     OptionsData::ptr_t      mOpts;
