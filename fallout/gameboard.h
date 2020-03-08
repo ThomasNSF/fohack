@@ -38,6 +38,7 @@ public:
         int         getY() const        { return convertToY(mPosition); }
 
         bool        isOnRange() const;
+        int         getRangeValue() const;
         int         getRangeStart() const;
         int         getRangeEnd() const;
 
@@ -64,14 +65,23 @@ public:
 
 private:
     bool                    moveCursor(int key);
+    bool                    handleEnter();
 
     void                    displayHeader();
     void                    displayFiller();
     void                    displayField();
     void                    displayStatus();
 
+    void                    writeStatus(const std::string &status);
+    void                    writePreview(const std::string &status, bool restore_cursor = true);
+    void                    clearPreview();
+    bool                    previewUnderCursor(bool restore_cursor = true);
+
     void                    initializeGameData();
     void                    initializeWords();
+
+    int                     calculateLikeness(const std::string &test);
+    void                    failGuess(int selection);
 
     WINDOW *                mGameWindow;
     
@@ -82,12 +92,14 @@ private:
 
     std::string             mCompanyName;
     int                     mTurnsRemaining;
+    int                     mPasswordIndex;
 
     std::string             mDisplayField;
     std::vector<int>        mDisplayData;
 
     GameCursor::ptr_t       mCursor;
     bool                    mExit;
+    bool                    mWin;
 
     FalloutWords::string_vec_t  mPasswords;
 

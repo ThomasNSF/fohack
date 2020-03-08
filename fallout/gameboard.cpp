@@ -44,8 +44,10 @@ GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words,
     mPanelField({ nullptr, nullptr }),
     mCompanyName(),
     mTurnsRemaining(3),
+    mPasswordIndex(-1),
     mCursor(),
     mExit(false),
+    mWin(false),
     mWords(words),
     mOpts(opts)
 { 
@@ -62,6 +64,7 @@ GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words,
     mvwin(mPanelField[1], 5, 27);
     mPanelStatus = newwin(17, 20, 5, 40);
     scrollok(mPanelStatus, true);
+    immedok(mPanelStatus, true);
     wmove(mPanelStatus, 16, 0);
 }
 
@@ -126,7 +129,7 @@ void GameBoard::initializeWords()
 {
     int total_length(sFieldWidth * sFieldHeight * 2);
 
-    size_t wordlength(10);
+    size_t wordlength(8);
    /*pick word list based on difficulty*/
     FalloutWords::string_vec_t list(mWords->mMasterLists[wordlength].begin(), 
         mWords->mMasterLists[wordlength].end());
@@ -153,6 +156,9 @@ void GameBoard::initializeWords()
         std::fill(it_markers, it_markers + wordlength, int(count + 1));
         ++count;
     }
+
+    mPasswordIndex = std::rand() % mPasswords.size();
+
 }
 
 bool GameBoard::play()
@@ -182,6 +188,7 @@ bool GameBoard::play()
 
         case KEY_RETURN:
         case KEY_ENTER:
+            handleEnter();
             break;
 
         default:
@@ -215,6 +222,41 @@ bool GameBoard::moveCursor(int key)
     }
 
     return success;
+}
+
+bool GameBoard::handleEnter()
+{
+    if (!mCursor->isOnRange())
+        return false;
+
+//    if (!previewUnderCursor(false))
+//        return false;
+
+//    writeStatus("\n");    
+    
+    int selected(mCursor->getRangeValue());
+    if (selected > 0)
+    {
+        writeStatus(mPasswords[selected - 1]);
+        writeStatus("\n");        
+        int likeness(calculateLikeness(mPasswords[selected - 1]));
+        std::stringstream result;
+        if (likeness < mPasswords[selected - 1].size())
+        {
+            failGuess(selected);
+            result << "ENTRY DENIED!\n";
+            result << "LIKENESS=" << likeness << "\n\n";
+        }
+        else
+        {
+            result << "ENTRY GRANTED!\n";
+            mWin = true;
+        }
+        writeStatus(result.str());
+    }
+
+    writeStatus("ENTER PASSWORD NOW\n> ");
+    return true;
 }
 
 void GameBoard::displayHeader()
@@ -301,6 +343,8 @@ void GameBoard::displayField()
                     mvwaddch(field, posy, posx, mDisplayField[i]);
                     wattroff(field, A_REVERSE);
                }
+
+                previewUnderCursor();
             }
             else
             {
@@ -312,6 +356,7 @@ void GameBoard::displayField()
                 wattrset(field, A_REVERSE);
                 mvwaddch(field, posy, posx, mDisplayField[mCursor->getPosition()]);
                 wattroff(field, A_REVERSE);
+                clearPreview();
             }
         }
         for (WINDOW *field : mPanelField)
@@ -323,7 +368,72 @@ void GameBoard::displayField()
 
 void GameBoard::displayStatus()
 {
-    wprintw(mPanelStatus, "ENTER PASSWORD NOW\n> ");
+    writeStatus("ENTER PASSWORD NOW\n> ");
+}
+
+void GameBoard::writeStatus(const std::string &status)
+{
+    wprintw(mPanelStatus, status.c_str());
+}
+
+void GameBoard::writePreview(const std::string &preview, bool restore_cursor)
+{
+    int posx;
+    int posy;
+
+    getyx(mPanelStatus, posy, posx);
+    wprintw(mPanelStatus, preview.c_str());
+    if (restore_cursor)
+        wmove(mPanelStatus, posy, posx);
+}
+
+void GameBoard::clearPreview()
+{
+    wclrtoeol(mPanelStatus);
+}
+
+bool GameBoard::previewUnderCursor(bool restore_cursor)
+{
+    int selected = mCursor->getRangeValue();
+    
+    if (!selected)
+    {
+        clearPreview();
+        return false;
+    }
+    writePreview(mPasswords[selected - 1]);
+    return true;
+}
+
+int GameBoard::calculateLikeness(const std::string &test)
+{
+    if (mPasswordIndex < 0)
+        return 0;
+
+    int likeness(0);
+    std::string password(mPasswords[mPasswordIndex]);
+
+    for (int i = 0; i < password.size(); ++i)
+    {
+        if (password[i] == test[i])
+            ++likeness;
+    }
+
+    return likeness;
+}
+
+void GameBoard::failGuess(int selection)
+{
+    for (int &value : mDisplayData)
+    {
+        if (value == selection)
+            value = 0;
+    }
+    
+//    --mTurnsRemaining;
+//    displayHeader();
+//    if (!mTurnsRemaining)
+//        mExit = true;
 }
 
 //========================================================================
@@ -448,6 +558,11 @@ int GameBoard::GameCursor::convertToY(int position) const
 bool GameBoard::GameCursor::isOnRange() const
 {
     return (mFieldData[mPosition] != 0);
+}
+
+int GameBoard::GameCursor::getRangeValue() const
+{
+    return (mFieldData[mPosition]);
 }
 
 int GameBoard::GameCursor::getRangeStart() const
