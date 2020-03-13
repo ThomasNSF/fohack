@@ -143,9 +143,24 @@ int main(int argc, char **argv)
 
     GameBoard::ptr_t board = std::make_shared<GameBoard>(gWindow, words, opts);
 
-    board->initialize();
+    while(true)
+    {
+        board->initialize();
+        bool win = board->play();
 
-    board->play();
+        board->writeStatus("\nPLAY AGAIN? [Y/N]");
+        int ch;
+        while(true)
+        {
+            ch = getch();
+            if ((ch == 'Y') || (ch == 'y') || (ch == 'N') || (ch == 'n'))
+                break;
+            beep(); 
+        }
+
+        if ((ch == 'N') || (ch == 'n'))
+            break;
+    }
 
     board.reset();
 	shutdown_curses();

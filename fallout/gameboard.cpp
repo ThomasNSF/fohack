@@ -43,7 +43,7 @@ GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words,
     mPanelFiller({ nullptr, nullptr }),
     mPanelField({ nullptr, nullptr }),
     mCompanyName(),
-    mTurnsRemaining(3),
+    mTurnsRemaining(4),
     mPasswordIndex(-1),
     mCursor(),
     mExit(false),
@@ -92,6 +92,17 @@ GameBoard::~GameBoard()
 
 void GameBoard::initialize()
 {
+    mTurnsRemaining = 4;
+    mWin = false;
+    mExit = false;
+
+    wclear(mPanelHeader);
+    wclear(mPanelFiller[0]);
+    wclear(mPanelFiller[1]);
+    wclear(mPanelField[0]);
+    wclear(mPanelField[1]);
+    wclear(mPanelStatus);
+
     initializeGameData();
 
     refresh();
@@ -128,6 +139,8 @@ void GameBoard::initializeGameData()
 void GameBoard::initializeWords()
 {
     int total_length(sFieldWidth * sFieldHeight * 2);
+
+    mPasswords.clear();
 
     size_t wordlength(8);
    /*pick word list based on difficulty*/
@@ -197,7 +210,7 @@ bool GameBoard::play()
         }
     }
 
-    return true;
+    return mWin;
 }
 
 bool GameBoard::moveCursor(int key)
@@ -229,11 +242,6 @@ bool GameBoard::handleEnter()
     if (!mCursor->isOnRange())
         return false;
 
-//    if (!previewUnderCursor(false))
-//        return false;
-
-//    writeStatus("\n");    
-    
     int selected(mCursor->getRangeValue());
     if (selected > 0)
     {
@@ -244,18 +252,20 @@ bool GameBoard::handleEnter()
         if (likeness < mPasswords[selected - 1].size())
         {
             failGuess(selected);
-            result << "ENTRY DENIED!\n";
             result << "LIKENESS=" << likeness << "\n\n";
+            result << "ENTRY DENIED!\n";
         }
         else
         {
             result << "ENTRY GRANTED!\n";
             mWin = true;
+            mExit = true;
         }
         writeStatus(result.str());
     }
 
-    writeStatus("ENTER PASSWORD NOW\n> ");
+    if (!mExit)
+        writeStatus("ENTER PASSWORD NOW\n> ");
     return true;
 }
 
@@ -271,6 +281,7 @@ void GameBoard::displayHeader()
             waddch(mPanelHeader, '\xDB');
             waddch(mPanelHeader, ' ');
         }
+        wclrtoeol(mPanelHeader);
         wrefresh(mPanelHeader);
     }
 }
@@ -430,10 +441,10 @@ void GameBoard::failGuess(int selection)
             value = 0;
     }
     
-//    --mTurnsRemaining;
-//    displayHeader();
-//    if (!mTurnsRemaining)
-//        mExit = true;
+    --mTurnsRemaining;
+    displayHeader();
+    if (!mTurnsRemaining)
+        mExit = true;
 }
 
 //========================================================================

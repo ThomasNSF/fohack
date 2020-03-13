@@ -59,6 +59,7 @@ public:
 
     void                    initialize();
     bool                    play();
+    void                    writeStatus(const std::string &status);
 
     static const int        sFieldWidth;
     static const int        sFieldHeight;
@@ -72,7 +73,6 @@ private:
     void                    displayField();
     void                    displayStatus();
 
-    void                    writeStatus(const std::string &status);
     void                    writePreview(const std::string &status, bool restore_cursor = true);
     void                    clearPreview();
     bool                    previewUnderCursor(bool restore_cursor = true);
