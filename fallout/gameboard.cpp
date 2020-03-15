@@ -4,6 +4,7 @@
 #include "fallout.h"
 #include "gameboard.h"
 #include <algorithm>
+#include <cctype>
 
 //========================================================================
 namespace
@@ -11,7 +12,13 @@ namespace
     const char KEY_ESC(0x1b);     /* Escape */
     const char KEY_RETURN(0x0a);  /* Return */
 
-    std::string FILLER_CHARS("\\/!@#$%^'\",.-_&*(){}[]");
+    const std::string FILLER_CHARS("\\/!@#$%^'\",.-_&*(){}[]<>");
+    const std::string CLOSING_CHARS(")}]>");
+    std::map<char, char> MATCHING_BRACE({
+        {')', '('},
+        {'}', '{'},
+        {']', '['},
+        {'>', '<'} });
 
     int generate_random_addr()
     {
@@ -134,6 +141,7 @@ void GameBoard::initializeGameData()
     mDisplayData.resize(total_length, 0);
 
     initializeWords();
+    initializeDuds();
 }
 
 void GameBoard::initializeWords()
@@ -171,7 +179,45 @@ void GameBoard::initializeWords()
     }
 
     mPasswordIndex = std::rand() % mPasswords.size();
+}
 
+void GameBoard::initializeDuds()
+{
+    int    dud_count(0);
+    size_t end_pos(mDisplayField.size());
+    size_t start_pos(std::string::npos);
+
+    while(true)
+    {
+        end_pos = mDisplayField.find_last_of(CLOSING_CHARS, end_pos);
+        if (end_pos == std::string::npos)
+            break;
+
+        char opening_brace = MATCHING_BRACE[ mDisplayField[end_pos] ];
+        start_pos = mDisplayField.find_last_of(opening_brace, end_pos);
+
+        if (start_pos != std::string::npos)
+        {   // found the matching open brace
+            std::string dud_span(mDisplayField.substr(start_pos, (end_pos - start_pos)));
+
+            if ( std::find_if(dud_span.begin(), dud_span.end(), 
+                    [](const char &c){ return std::isalpha(c); }) == dud_span.end())
+            {   // no aplhabetic chars in the span
+                dud_count++;
+                for(size_t i = start_pos; i < end_pos; ++i)
+                {
+                    mDisplayData[i] = -dud_count;
+                }
+                end_pos = start_pos;
+                continue;
+            }
+        }
+
+        // nothing was found... back end_pos up by one and try again.
+        --end_pos;
+        if (!end_pos)
+            break;
+    }
 }
 
 bool GameBoard::play()

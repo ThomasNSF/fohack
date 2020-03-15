@@ -79,6 +79,7 @@ private:
 
     void                    initializeGameData();
     void                    initializeWords();
+    void                    initializeDuds();
 
     int                     calculateLikeness(const std::string &test);
     void                    failGuess(int selection);
