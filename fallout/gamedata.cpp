@@ -75,3 +75,44 @@ void FalloutWords::dump()
     }
 }
 //------------------------------------------------------------------------
+const  FalloutWords::string_set_t & FalloutWords::selectWordSet(int difficulty) const
+{
+    size_t bucket_count(mMasterLists.size());
+    std::array<size_t, 3>   ranges;
+
+    size_t bucket_size(bucket_count / 3);
+    size_t bucket_slop(bucket_count % 3);
+
+    ranges[0] = bucket_size;
+    ranges[1] = bucket_size;
+    ranges[2] = bucket_size;
+
+    if (bucket_slop == 1)
+        ranges[1] += 1;
+    else if (bucket_slop == 2)
+    {
+        ranges[0] += 1;
+        ranges[1] += 1;
+    }
+
+    if (!difficulty)
+        difficulty = std::rand() % 3;
+    else 
+        difficulty -= 1;
+
+    string_length_map_t::const_iterator itset(mMasterLists.begin());
+
+    for (int i = 0; i < difficulty; ++i)
+    {
+        for (int j = 0; j < ranges[i]; ++j)
+            ++itset;
+    }
+
+    int pick = std::rand() % ranges[difficulty];
+    while (pick--)
+    {
+        ++itset;
+    }
+
+    return (*itset).second;
+}

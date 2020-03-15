@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <memory>
+#include <algorithm>
 #include <curses.h>
 
 #include <boost/program_options.hpp>

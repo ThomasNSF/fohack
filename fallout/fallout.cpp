@@ -52,7 +52,7 @@ namespace
                 ("boosts",      bpo::value<bool>()->default_value(true),         
                     "Include boosts/dud removal")
                 ("difficulty",   bpo::value<int>()->default_value(0),          
-                    "Set difficulty\n"
+                    "Set difficulty (0-3)\n"
                         "\t0 = Random");
         }
 
@@ -94,7 +94,13 @@ namespace
                 opts->mPowerups = true;
 
             if (vm.count("difficulty"))
+            {
                 opts->mDifficulty = vm["difficulty"].as<int>();
+                if (opts->mDifficulty < 0)
+                    opts->mDifficulty = 0;
+                if (opts->mDifficulty > 3)
+                    opts->mDifficulty = 3;
+            }
             else
                 opts->mDifficulty = 0;
 

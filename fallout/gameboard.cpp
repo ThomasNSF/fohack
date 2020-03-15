@@ -142,10 +142,10 @@ void GameBoard::initializeWords()
 
     mPasswords.clear();
 
-    size_t wordlength(8);
-   /*pick word list based on difficulty*/
-    FalloutWords::string_vec_t list(mWords->mMasterLists[wordlength].begin(), 
-        mWords->mMasterLists[wordlength].end());
+    const FalloutWords::string_set_t &wordset(mWords->selectWordSet(mOpts->mDifficulty));
+    size_t wordlength(wordset.begin()->length());
+
+    FalloutWords::string_vec_t list(wordset.begin(), wordset.end());
 
     std::random_shuffle(list.begin(), list.end());
 
