@@ -63,10 +63,13 @@ public:
 
     static const int        sFieldWidth;
     static const int        sFieldHeight;
+    static const int        sMaxTurns;
 
 private:
     bool                    moveCursor(int key);
     bool                    handleEnter();
+    void                    handlePasswordGuess(int selected);
+    void                    handleDudRemoval(int selected);
 
     void                    displayHeader();
     void                    displayFiller();
@@ -83,6 +86,7 @@ private:
 
     int                     calculateLikeness(const std::string &test);
     void                    failGuess(int selection);
+    void                    clearSelection(int selection, bool clear_text = false);
 
     WINDOW *                mGameWindow;
     

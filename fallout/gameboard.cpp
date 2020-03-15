@@ -40,6 +40,7 @@ namespace
 //========================================================================
 const int GameBoard::sFieldWidth(12);
 const int GameBoard::sFieldHeight(17);
+const int GameBoard::sMaxTurns(4);
 
 //------------------------------------------------------------------------
 GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words, 
@@ -50,7 +51,7 @@ GameBoard::GameBoard(WINDOW *mainwindow, const FalloutWords::ptr_t &words,
     mPanelFiller({ nullptr, nullptr }),
     mPanelField({ nullptr, nullptr }),
     mCompanyName(),
-    mTurnsRemaining(4),
+    mTurnsRemaining(sMaxTurns),
     mPasswordIndex(-1),
     mCursor(),
     mExit(false),
@@ -198,25 +199,28 @@ void GameBoard::initializeDuds()
 
         if (start_pos != std::string::npos)
         {   // found the matching open brace
-            std::string dud_span(mDisplayField.substr(start_pos, (end_pos - start_pos)));
+            std::string dud_span(mDisplayField.substr(start_pos, (end_pos - start_pos)+1));
 
-            if ( std::find_if(dud_span.begin(), dud_span.end(), 
-                    [](const char &c){ return std::isalpha(c); }) == dud_span.end())
-            {   // no aplhabetic chars in the span
-                dud_count++;
-                for(size_t i = start_pos; i < end_pos; ++i)
-                {
-                    mDisplayData[i] = -dud_count;
+            if (dud_span.size() < sFieldWidth)
+            {
+                if (std::find_if(dud_span.begin(), dud_span.end(),
+                        [](const char &c) { return std::isalpha(c); }) == dud_span.end())
+                {   // no aplhabetic chars in the span
+                    dud_count++;
+                    for (size_t i = start_pos; i <= end_pos; ++i)
+                    {
+                        mDisplayData[i] = -dud_count;
+                    }
+                    end_pos = start_pos;
+                    continue;
                 }
-                end_pos = start_pos;
-                continue;
             }
         }
 
         // nothing was found... back end_pos up by one and try again.
-        --end_pos;
         if (!end_pos)
             break;
+        --end_pos;
     }
 }
 
@@ -291,28 +295,73 @@ bool GameBoard::handleEnter()
     int selected(mCursor->getRangeValue());
     if (selected > 0)
     {
-        writeStatus(mPasswords[selected - 1]);
-        writeStatus("\n");        
-        int likeness(calculateLikeness(mPasswords[selected - 1]));
-        std::stringstream result;
-        if (likeness < mPasswords[selected - 1].size())
-        {
-            failGuess(selected);
-            result << "LIKENESS=" << likeness << "\n\n";
-            result << "ENTRY DENIED!\n";
-        }
-        else
-        {
-            result << "ENTRY GRANTED!\n";
-            mWin = true;
-            mExit = true;
-        }
-        writeStatus(result.str());
+        handlePasswordGuess(selected);
+    } 
+    else if (selected < 0)
+    {
+        handleDudRemoval(selected);
     }
 
     if (!mExit)
         writeStatus("ENTER PASSWORD NOW\n> ");
     return true;
+}
+
+void GameBoard::handlePasswordGuess(int selected)
+{
+    writeStatus(mPasswords[selected - 1]);
+    writeStatus("\n");        
+    int likeness(calculateLikeness(mPasswords[selected - 1]));
+    std::stringstream result;
+    if (likeness < mPasswords[selected - 1].size())
+    {
+        failGuess(selected);
+        result << "LIKENESS=" << likeness << "\n\n";
+        result << "ENTRY DENIED!\n";
+    }
+    else
+    {
+        result << "ENTRY GRANTED!\n";
+        mWin = true;
+        mExit = true;
+    }
+    writeStatus(result.str());
+}
+
+void GameBoard::handleDudRemoval(int selected)
+{
+    clearSelection(selected);
+    writeStatus("\n");
+
+    if ((std::rand() % 20) == 0)
+    {   // 5% chance to restore turns
+        mTurnsRemaining = sMaxTurns;
+        writeStatus("TURNS RESET\n");
+        displayHeader();
+    }
+    else
+    {
+        std::set<int>   outstanding;
+        for (const int &value : mDisplayData)
+        {   // collect unselected duds
+            if ((value > 0) && ((value - 1) != mPasswordIndex))
+                outstanding.insert(value);
+        }
+        if (!outstanding.empty())
+        {
+            size_t duds(outstanding.size());
+            size_t dud_remove(std::rand() % duds);
+
+            auto it_remove = outstanding.begin();
+            while (dud_remove--)
+                ++it_remove;
+
+            int dud_index = (*it_remove);
+
+            clearSelection(dud_index, true);
+            writeStatus("DUD REMOVED\n");
+        }
+    }
 }
 
 void GameBoard::displayHeader()
@@ -458,7 +507,20 @@ bool GameBoard::previewUnderCursor(bool restore_cursor)
         clearPreview();
         return false;
     }
-    writePreview(mPasswords[selected - 1]);
+    std::string preview;
+    if (selected > 0)
+        preview = mPasswords[selected - 1];
+    else
+    {
+        auto it_start = std::find(mDisplayData.begin(), mDisplayData.end(), selected);
+        auto it_end = std::find_if_not(it_start, mDisplayData.end(), [selected](int test) { return test == selected; });
+
+        size_t pos_start = std::distance(mDisplayData.begin(), it_start);
+        size_t pos_end = std::distance(mDisplayData.begin(), it_end);
+
+        preview = mDisplayField.substr(pos_start, (pos_end - pos_start));
+    }
+    writePreview(preview);
     return true;
 }
 
@@ -481,16 +543,29 @@ int GameBoard::calculateLikeness(const std::string &test)
 
 void GameBoard::failGuess(int selection)
 {
-    for (int &value : mDisplayData)
-    {
-        if (value == selection)
-            value = 0;
-    }
+    clearSelection(selection);
     
     --mTurnsRemaining;
     displayHeader();
     if (!mTurnsRemaining)
         mExit = true;
+}
+
+void GameBoard::clearSelection(int selection, bool clear_text )
+{
+    size_t index(0);
+    for (int &value : mDisplayData)
+    {
+        if (value == selection)
+        {
+            value = 0;
+            if (clear_text)
+                mDisplayField[index] = '.';
+        }
+        ++index;
+    }
+    if (clear_text)
+        displayField();
 }
 
 //========================================================================
