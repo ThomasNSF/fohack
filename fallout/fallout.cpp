@@ -49,8 +49,8 @@ namespace
                     "Word file")
                 ("wordcheck",   
                     "Load word file, display its contents and exit.")
-                ("boosts",      bpo::value<bool>()->default_value(true),         
-                    "Include boosts/dud removal")
+                ("no-duds",      bpo::value<bool>()->default_value(true),         
+                    "Do not include dud removal.")
                 ("difficulty",   bpo::value<int>()->default_value(0),          
                     "Set difficulty (0-3)\n"
                         "\t0 = Random");
@@ -87,11 +87,7 @@ namespace
                 opts->mDataFile = vm["wordfile"].as<std::string>();
 
             opts->mCheckOnly = (vm.count("wordcheck") > 0);
-
-            if (vm.count("boosts"))
-                opts->mPowerups = vm["boosts"].as<bool>();
-            else
-                opts->mPowerups = true;
+            opts->mPowerups = (vm.count("no-duds") == 0);
 
             if (vm.count("difficulty"))
             {

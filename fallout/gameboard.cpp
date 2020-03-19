@@ -142,7 +142,8 @@ void GameBoard::initializeGameData()
     mDisplayData.resize(total_length, 0);
 
     initializeWords();
-    initializeDuds();
+    if (mOpts->mPowerups)
+        initializeDuds();
 }
 
 void GameBoard::initializeWords()
