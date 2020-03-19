@@ -49,7 +49,7 @@ namespace
                     "Word file")
                 ("wordcheck",   
                     "Load word file, display its contents and exit.")
-                ("no-duds",      bpo::value<bool>()->default_value(true),         
+                ("no-duds",         
                     "Do not include dud removal.")
                 ("difficulty",   bpo::value<int>()->default_value(0),          
                     "Set difficulty (0-3)\n"
