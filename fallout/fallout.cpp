@@ -25,7 +25,7 @@ namespace
         halfdelay(10);         /* ...well, no more than a second, anyway */
         keypad(gWindow, TRUE);   /* enable cursor keys */
 
-        srand(static_cast<unsigned int>(time(nullptr)));
+        std::srand(static_cast<unsigned int>(time(nullptr)));
 	}
 
 	void shutdown_curses()
@@ -51,6 +51,10 @@ namespace
                     "Load word file, display its contents and exit.")
                 ("no-duds",         
                     "Do not include dud removal.")
+                ("single-play",
+                    "Run a single session and exit with error code.")
+                ("single-win",
+                    "Execute until win, return error code with.")
                 ("difficulty",   bpo::value<int>()->default_value(0),          
                     "Set difficulty (0-3)\n"
                         "\t0 = Random");
@@ -100,6 +104,9 @@ namespace
             else
                 opts->mDifficulty = 0;
 
+            opts->mSinglePlay = (vm.count("single-play") != 0);
+            opts->mPlayUntilWin = (vm.count("single-win") != 0);
+
             return opts;
         }
 
@@ -144,11 +151,18 @@ int main(int argc, char **argv)
 	initialize_curses();
 
     GameBoard::ptr_t board = std::make_shared<GameBoard>(gWindow, words, opts);
+    int played_difficulty(0);
+    bool win(false);
 
     while(true)
     {
         board->initialize();
-        bool win = board->play();
+        win = board->play();
+
+        played_difficulty = board->getPlayDifficulty();
+
+        if (opts->mSinglePlay || (win && opts->mPlayUntilWin))
+            break;
 
         board->writeStatus("\nPLAY AGAIN? [Y/N]");
         int ch;
@@ -166,5 +180,8 @@ int main(int argc, char **argv)
 
     board.reset();
 	shutdown_curses();
+    if (win)
+        return played_difficulty;
+
 	return 0;
 }

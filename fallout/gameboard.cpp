@@ -28,9 +28,9 @@ namespace
         {
             address = address << 4;
             if (i == 3)
-                address |= (rand() % 2) * 8;
+                address |= (std::rand() % 2) * 8;
             else
-                address |= rand() % 0xF;
+                address |= std::rand() % 0xF;
         }
 
         return address;
@@ -124,6 +124,14 @@ void GameBoard::initialize()
         wrefresh(mPanelStatus);
 }
 
+void GameBoard::setPlayDifficulty(int difficulty)
+{
+    if (!difficulty)
+        mPlayDifficulty = (std::rand() % 3) + 1;
+    else
+        mPlayDifficulty = difficulty;
+}
+
 void GameBoard::initializeGameData()
 {
     mCursor = std::make_shared<GameCursor>(sFieldWidth, sFieldHeight, false, mDisplayData);
@@ -135,12 +143,13 @@ void GameBoard::initializeGameData()
 
     for (char &c : mDisplayField)
     {
-        c = FILLER_CHARS[rand() % FILLER_CHARS.size()];
+        c = FILLER_CHARS[std::rand() % FILLER_CHARS.size()];
     }
 
     mDisplayData.clear();
     mDisplayData.resize(total_length, 0);
 
+    setPlayDifficulty(mOpts->mDifficulty);
     initializeWords();
     if (mOpts->mPowerups)
         initializeDuds();
@@ -152,7 +161,7 @@ void GameBoard::initializeWords()
 
     mPasswords.clear();
 
-    const FalloutWords::string_set_t &wordset(mWords->selectWordSet(mOpts->mDifficulty));
+    const FalloutWords::string_set_t &wordset(mWords->selectWordSet(mPlayDifficulty));
     size_t wordlength(wordset.begin()->length());
 
     FalloutWords::string_vec_t list(wordset.begin(), wordset.end());

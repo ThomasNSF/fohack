@@ -61,6 +61,9 @@ public:
     bool                    play();
     void                    writeStatus(const std::string &status);
 
+    void                    setPlayDifficulty(int difficulty);
+    int                     getPlayDifficulty() const { return mPlayDifficulty; }
+
     static const int        sFieldWidth;
     static const int        sFieldHeight;
     static const int        sMaxTurns;
@@ -103,6 +106,7 @@ private:
     std::vector<int>        mDisplayData;
 
     GameCursor::ptr_t       mCursor;
+    int                     mPlayDifficulty;
     bool                    mExit;
     bool                    mWin;
 

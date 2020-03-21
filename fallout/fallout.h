@@ -20,6 +20,8 @@ struct OptionsData
     int             mDifficulty;
     bool            mPowerups;
     bool            mCheckOnly;
+    bool            mSinglePlay;
+    bool            mPlayUntilWin;
 };
 
 extern WINDOW *gWindow;
