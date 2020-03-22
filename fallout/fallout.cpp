@@ -171,7 +171,8 @@ int main(int argc, char **argv)
             ch = getch();
             if ((ch == 'Y') || (ch == 'y') || (ch == 'N') || (ch == 'n'))
                 break;
-            beep(); 
+            if (ch)
+                beep(); 
         }
 
         if ((ch == 'N') || (ch == 'n'))
