@@ -6,3 +6,4 @@ find_package(Curses REQUIRED)
 find_package(Boost COMPONENTS program_options exception REQUIRED)
 
 add_subdirectory(fallout)
+add_subdirectory(screensave)
