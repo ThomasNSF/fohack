@@ -3,9 +3,6 @@
 #define TEXTSCREEN_H
 
 #include "screensave.h"
-#include "boost/filesystem.hpp"
-
-namespace bfilesystem = boost::filesystem;
 
 class TextScreen
 {
@@ -14,7 +11,7 @@ public:
                     TextScreen();
                     ~TextScreen();
 
-    bool            loadScreenText(const bfilesystem::path &);
+    bool            loadScreenText(const bfs::path &);
 
     void            play(WINDOW *pwin);
 private:
