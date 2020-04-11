@@ -12,7 +12,8 @@ namespace
     const char KEY_ESC(0x1b);     /* Escape */
     const char KEY_RETURN(0x0a);  /* Return */
 
-    const std::string FILLER_CHARS("\\/!@#$%^'\",.-_&*(){}[]<>");
+    //const std::string FILLER_CHARS("\\/!@#$%^'\",.-_&*(){}[]<>");
+    const std::string FILLER_CHARS("\\\\//!!@@##$$%%^^''\"\",--_&&*((){{}[[]<<>");
     const std::string CLOSING_CHARS(")}]>");
     std::map<char, char> MATCHING_BRACE({
         {')', '('},
