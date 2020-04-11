@@ -35,9 +35,9 @@ TextScreen::~TextScreen()
 {}
 
 //-------------------------------------------------------------------------
-bool TextScreen::loadScreenText(const bfs::path &filepath)
+bool TextScreen::loadScreenText(const std::string &filepath)
 {
-    std::ifstream infile(filepath.c_str());
+    std::ifstream infile(filepath);
 
     if (infile.fail())
     {

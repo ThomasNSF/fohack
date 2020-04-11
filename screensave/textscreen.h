@@ -11,7 +11,7 @@ public:
                     TextScreen();
                     ~TextScreen();
 
-    bool            loadScreenText(const bfs::path &);
+    bool            loadScreenText(const std::string &);
 
     void            play(WINDOW *pwin);
 private:
