@@ -1,11 +1,13 @@
 # Screensave
 
 set(SCREENSAVE_SOURCE 
+	lockoutwindow.cpp
     screensave.cpp
     textscreen.cpp
 )
 
 set(SCREENSAVE_HEADERS
+	lockoutwindow.h
     screensave.h
     textscreen.h
 )

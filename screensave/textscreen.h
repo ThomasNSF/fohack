@@ -8,8 +8,8 @@ class TextScreen
 {
 public:
 
-                    TextScreen();
-                    ~TextScreen();
+                    TextScreen(const OptionsData::ptr_t &opts);
+                    ~TextScreen() = default;
 
     bool            loadScreenText(const std::string &);
 
@@ -30,7 +30,7 @@ private:
             mTargetRow = (int)mColumnText.size() - 1;
         }
 
-        bool        process(WINDOW *pwin);
+        bool        process(WINDOW *pwin, int offset_x, int offset_y);
         bool        isDone() const;
         void        reset();
     private:
@@ -42,9 +42,11 @@ private:
 
     typedef std::map<int, ColumnDef::ptr_t> column_map_t;
 
-    void            buildColumns(const text_vect_t &columns);
+    void                buildColumns(const text_vect_t &columns);
 
-    column_map_t    mColumns;
+    column_map_t        mColumns;
+    OptionsData::ptr_t  mOpts;
+    int                 mMaxColumn;
 
     static const int    sSpacing;
     static const int    sMaxInflight;

@@ -114,14 +114,17 @@ int main(int argc, char **argv)
     std::srand(static_cast<unsigned int>(time(nullptr)));
     initialize_curses();
 
-    TextScreen test;
+    TextScreen text(opts);
 
-    test.loadScreenText(opts->mTextFile);
+    text.loadScreenText(opts->mTextFile);
 
-    test.play(gWindow);
+    text.play(gWindow);
 
     if (opts->mWaitForKey)
         getchar();
+    else if (opts->mTimeoutSeconds >= 1.0f)
+    {
+    }
 
     shutdown_curses();
 

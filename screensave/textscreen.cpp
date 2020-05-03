@@ -28,10 +28,8 @@ const int TextScreen::sSpacing(5);
 const int TextScreen::sMaxInflight(5);
 
 //========================================================================
-TextScreen::TextScreen()
-{}
-
-TextScreen::~TextScreen()
+TextScreen::TextScreen(const OptionsData::ptr_t &opts):
+    mOpts(opts)
 {}
 
 //-------------------------------------------------------------------------
@@ -78,21 +76,18 @@ bool TextScreen::loadScreenText(const std::string &filepath)
 
     buildColumns(text_columns);
     //-------------------------------------------
-#if 0
-    for (auto its(mScreenColumns.begin()); its != mScreenColumns.end(); ++its)
-    {
-        std::cerr << (*its) << "X" << std::endl;
-    }
-#endif
     return true;
 }
 
 void TextScreen::buildColumns(const text_vect_t &columns)
 {
     mColumns.clear();
-    
+    mMaxColumn = 0;
+
     for (int col = 0; col < columns.size(); ++col)
     {
+        if (columns[col].size() > mMaxColumn)
+            mMaxColumn = columns[col].size();
         ColumnDef::ptr_t columndef(std::make_shared<ColumnDef>(col, columns[col]));
         mColumns[col] = columndef;
     }
@@ -122,6 +117,13 @@ void TextScreen::play(WINDOW *pwin)
     column_map_t inflight;
     int spacing_count(0);
 
+    int window_x(0);
+    int window_y(0);
+    getmaxyx(pwin, window_y, window_x);
+
+    int offset_x((window_x - mColumns.size()) / 2);
+    int offset_y((window_y - mMaxColumn) / 2);
+
     while (!remaining.empty() || !inflight.empty())
     {
         --spacing_count;
@@ -146,7 +148,7 @@ void TextScreen::play(WINDOW *pwin)
         column_map_t::iterator it2 = inflight.begin(); 
         while(it2 != inflight.end())
         {
-            if ((*it2).second->process(pwin))
+            if ((*it2).second->process(pwin, offset_x, offset_y))
             {
                 ++it2;
             }
@@ -160,24 +162,25 @@ void TextScreen::play(WINDOW *pwin)
             }
         }
         wrefresh(pwin);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        /*
-        if (kbhit())
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+#if 0
+        if ((mOpts->mTimeoutSeconds <= 1.0f) && kbhit())
             break;
-        */
+#endif
     }
 }
 
 //========================================================================
-bool TextScreen::ColumnDef::process(WINDOW *pwin)
+bool TextScreen::ColumnDef::process(WINDOW *pwin, int offset_x, int offset_y)
 {
     if (mCurrentRow)
     {
-        mvwaddch(pwin, mCurrentRow - 1, mColumnNumber, ' ');
+        mvwaddch(pwin, (mCurrentRow - 1) + offset_y, mColumnNumber + offset_x, ' ');
         //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    mvwaddch(pwin, mCurrentRow, (int)mColumnNumber, mColumnText[mTargetRow]);
+    mvwaddch(pwin, mCurrentRow + offset_y, (int)(mColumnNumber + offset_x), mColumnText[mTargetRow]);
     
     ++mCurrentRow;
     if (mCurrentRow < mTargetRow)
